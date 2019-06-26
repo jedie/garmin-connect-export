@@ -425,14 +425,26 @@ def login_to_garmin_connect(args):
     # Initially, we need to get a valid session cookie, so we pull the login page.
     print('Connecting to Garmin Connect...', end='')
     logging.info('Connecting to %s', URL_GC_LOGIN)
-    http_req(URL_GC_LOGIN)
+    response = http_req(URL_GC_LOGIN)
     print(' Done.')
+
+    # e.g.:
+    # <input type="hidden" name="_csrf" value="1CBE8064424E84CC85631FFD85636C36C3C8D8EC186AA251CB0C9E3E50A3D941819CAC729F5A5A0275CDB4427D74A9E5782D" />
+
+    try:
+        csrf = re.findall(r'name="_csrf" value="(.*?)"', response)[0]
+    except IndexError:
+        raise Exception('did not get CSRF :(')
+
+    logging.info("CSRF: %r", csrf)
+
 
     # Now we'll actually login.
     # Fields that are passed in a typical Garmin login.
     post_data = {
         'username': username,
         'password': password,
+        '_csrf': csrf,
         'embed': 'true',
         'lt': 'e1s1',
         '_eventId': 'submit',
